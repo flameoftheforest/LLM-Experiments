@@ -74,11 +74,11 @@
 + Follow https://help.totalview.io/previous_releases/2020/HTML/index.html#page/TotalView/totalviewlhug-about-cuda.20.3.html
 + Find Cuda `nvcc` (hint: it should be in `/usr/local/cuda/bin`)
 + Ensure `./zshrc` contains
-  ```
-  export PATH="/usr/local/cuda/bin:$PATH"
-  export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
-  export LLAMA_CUBLAS=1 # for llama-cpp-python
-  ```
+>  ``` bash
+>  export PATH="/usr/local/cuda/bin:$PATH"
+>  export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+>  export LLAMA_CUBLAS=1 # for llama-cpp-python
+>  ```
 #### 6. "Basic" Python Modules For LLM
 + Following https://colab.research.google.com/github/sophiamyang/demos/blob/main/advanced_rag_small_to_big.ipynb#scrollTo=h0L1ZfgxqPNf
 + Run `pip install -U llama_hub llama_index braintrust autoevals pypdf pillow transformers torch torchvision`
@@ -91,4 +91,25 @@
 + `torch` - Provides tensor computation (like NumPy) with strong GPU acceleration + deep neural networks built on a tape-based autograd system
 + `torchvision` - Package consists of popular datasets, model architectures, and common image transformations for computer vision
 
-#### 7. Cuda Toolchain
+#### 7. Llama-cpp-python
++ I find OpenAI w/o monthly subscription a PITA to use. Llama-CPP is the OS replacement for my frustration
++ Refer https://gpt-index.readthedocs.io/en/latest/examples/llm/llama_2_llama_cpp.html
++ From the above, you will find a link (https://github.com/abetlen/llama-cpp-python#installation-with-openblas--cublas--clblast--metal) to install Llama-CPP
++ I use the cuBLAS option:
+  + Ensure `.zshrc` has `export LLAMA_CUBLAS=1`
+  + Run `CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python`
++ When that's done, run a `jupyter notebook` and step through the `llama_2_llama_cpp.html`
+
+#### 8. CUDA Error 222 - provided PTX was compiled with an unsupported toolchain
++ You will/might hit the above when you are doing:
+>  ``` python
+>  response = llm.complete("Hello! Can you tell me a poem about cats and dogs?")
+>  print(response.text) # error here
+>  ``` 
++ This is because the driver used in the WSL2 is incompatible with the one used in `pip install llama-cpp-python` to compile `libllama.so`
++ According to this link: https://github.com/abetlen/llama-cpp-python/issues/401#issuecomment-1732168061 , the fix is:
+  + `git clone --recursive https://github.com/ggerganov/llama.cpp.git ~/[some_temp_dir]`
+  + `make LLAMA_CUBLAS=1 -j libllama.so` and you have a copy of locally built `libllama.so`
+  + move the built `.so` to the python lib directory
+    + I use `explorer.exe` to search for it
+    + It should be something like `\\wsl.localhost\[WSL-DISTRO]\[CONDA-PATH]\envs\[VENV-NAME]\lib\[PYTHON-VER]\site-packages\llama_cpp`
